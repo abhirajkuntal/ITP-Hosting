@@ -1,0 +1,94 @@
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Arial', sans-serif;
+  background-color: #121212;
+  color: #fff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+.container {
+  text-align: center;
+}
+
+h1 {
+  margin-bottom: 30px;
+}
+
+.upload-box {
+  width: 300px;
+  height: 200px;
+  border: 2px dashed #888;
+  border-radius: 10px;
+  margin: 20px auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  background-color: #1f1f1f;
+  transition: all 0.3s ease;
+}
+
+.upload-box:hover {
+  border-color: #00ff99;
+}
+
+.upload-content {
+  font-size: 18px;
+  color: #ccc;
+  text-align: center;
+}
+
+.upload-btn {
+
+  display: block;
+  margin: 10px auto;
+  padding: 12px 30px;
+  border: none;
+  border-radius: 25px;
+  background-color: #00ff99;
+  color: #000;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.intercept-btn {
+  display: block;
+  margin: 10px auto;
+  padding: 12px 38px;
+  border: none;
+  border-radius: 25px;
+  background-color: #00ff99;
+  color: #000;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+.upload-btn:hover, .intercept-btn:hover {
+  background-color: #00cc77;
+}
+
+.upload-icon {
+  width: 30px;
+  height: 30px;
+  margin-bottom: 10px;
+}
+
+.loader {
+  border: 8px solid #f3f3f3;
+  border-top: 8px solid #007bff;
+  border-radius: 50%;
+  width: 80px;
+  height: 80px;
+  animation: spin 1.2s linear infinite;
+  margin: 30px auto;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}

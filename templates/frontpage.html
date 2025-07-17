@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Intelligent Traffic Perception</title>
+  <link rel="stylesheet" href="/static/frontpage.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+</head>
+<body>
+
+  <div class="container" id="mainContainer">
+    <h1>Upload Traffic Image/Video</h1>
+
+    <div class="upload-box" id="uploadBox">
+      <input type="file" id="fileInput" hidden>
+      <div class="upload-content" onclick="document.getElementById('fileInput').click()">
+        <img src="/static/file-upload-icon.svg" alt="Upload Icon" class="upload-icon"><br>
+        <span>Click to Upload File</span>
+      </div>
+    </div>
+
+    <button class="upload-btn" onclick="document.getElementById('fileInput').click()">Upload File</button>
+    <button class="intercept-btn" onclick="interceptFile()">Intercept</button>
+  </div>
+
+  <script src="/static/script.js"></script>
+
+</body>
+</html>

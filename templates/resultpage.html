@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Processed Output</title>
+  <link rel="stylesheet" href="/static/frontpage.css">
+</head>
+<body>
+
+  <div class="container">
+    <h1>Your Processed Output ✅</h1>
+
+    {% if filename.lower().endswith(('.png', '.jpg', '.jpeg')) %}
+      <img src="/processed/{{ filename }}" alt="Processed Output" style="max-width: 80%; margin-top: 20px;">
+    {% elif filename.lower().endswith(('.mp4', '.avi')) %}
+      <video controls style="max-width: 80%; margin-top: 20px;">
+        <source src="/processed/{{ filename }}" type="video/mp4">
+        Your browser does not support the video tag.
+      </video>
+    {% else %}
+      <p>Unsupported file type</p>
+    {% endif %}
+
+    <div style="margin-top: 30px;">
+      <a href="/processed/{{ filename }}" download style="text-decoration: none; padding: 12px 24px; background: #28a745; color: white; border-radius: 8px;">Download Output</a>
+    </div>
+  </div>
+
+</body>
+</html>
