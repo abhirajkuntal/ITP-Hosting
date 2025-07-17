@@ -7,16 +7,36 @@ import numpy as np
 from ultralytics import YOLO
 from torchvision import transforms
 from PIL import Image
+import gdown
 
-# Load YOLOv8 model from models folder
-yolo_model = YOLO('models/yolo11s.pt')
+# === Ensure models directory exists ===
+os.makedirs('models', exist_ok=True)
 
-# Load HybridNets model for segmentation
+# === Define model paths and Google Drive links ===
+yolo_path = 'models/yolo11s.pt'
+yolo_gdrive_id = '1o53aVuum-ND13jj3XlAQE8tF4Hus9lhP'
+
+hybrid_path = 'models/hybridnets_weights.pth'
+hybrid_gdrive_id = '1muXT6Z1dzRZFw57lHgPtg9iDw-t3Fhem'
+
+# === Download models if not present ===
+if not os.path.exists(yolo_path):
+    print("[INFO] Downloading YOLOv8 model...")
+    gdown.download(f'https://drive.google.com/uc?id={yolo_gdrive_id}', yolo_path, quiet=False)
+
+if not os.path.exists(hybrid_path):
+    print("[INFO] Downloading HybridNets model...")
+    gdown.download(f'https://drive.google.com/uc?id={hybrid_gdrive_id}', hybrid_path, quiet=False)
+
+# === Load YOLOv8 ===
+yolo_model = YOLO(yolo_path)
+
+# === Load HybridNets ===
 hybrid_model = torch.hub.load('datvuthanh/hybridnets', 'hybridnets', pretrained=False)
-hybrid_model.load_state_dict(torch.load('models/hybridnets_weights.pth', map_location='cpu'))
+hybrid_model.load_state_dict(torch.load(hybrid_path, map_location='cpu'))
 hybrid_model.eval()
 
-# Transformation for HybridNets input
+# === Image transformation for HybridNets ===
 transform = transforms.Compose([
     transforms.Resize((384, 640)),
     transforms.ToTensor(),
@@ -24,50 +44,42 @@ transform = transforms.Compose([
                          std=[0.229, 0.224, 0.225])
 ])
 
+# === Image Processing ===
 def process_image(input_path, output_path):
     print(f"[INFO] Starting image processing: {input_path}")
 
     try:
-        # Load image
         frame = cv2.imread(input_path)
         if frame is None:
             print(f"[ERROR] Could not read image: {input_path}")
             return
 
-        # Convert to RGB for model
         image_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         pil_img = Image.fromarray(image_rgb)
-
-        # Transform for HybridNets
         input_tensor = transform(pil_img).unsqueeze(0)
 
-        # Run HybridNets for segmentation
         with torch.no_grad():
             seg_output = hybrid_model(input_tensor)[1][0].sigmoid().cpu().numpy()
 
-        # Prepare mask
-        seg_mask = (seg_output > 0.3).astype(np.uint8)[0] * 255  # Binary mask
+        seg_mask = (seg_output > 0.3).astype(np.uint8)[0] * 255
         seg_mask_color = cv2.cvtColor(seg_mask, cv2.COLOR_GRAY2BGR)
 
-        # Run YOLO detection
         results = yolo_model(frame)
         annotated_frame = results[0].plot()
 
-        # Resize seg_mask_color to match YOLO output frame size
         seg_mask_color = cv2.resize(seg_mask_color, (annotated_frame.shape[1], annotated_frame.shape[0]))
-        
         if len(seg_mask_color.shape) == 2:
-            seg_mask_color = cv2.cvtColor(seg_mask_color, cv2.COLOR_GRAY2BGR)        
+            seg_mask_color = cv2.cvtColor(seg_mask_color, cv2.COLOR_GRAY2BGR)
 
-        # Combine YOLO + Segmentation
         final_frame = cv2.addWeighted(annotated_frame, 0.7, seg_mask_color, 0.3, 0)
-
-        # Save result
         cv2.imwrite(output_path, final_frame)
+
         print(f"Image processed and saved: {output_path}")
+
     except Exception as e:
         print(f"[ERROR] Exception during image processing: {str(e)}")
 
+# === Video Processing ===
 def process_video(input_path, output_path):
     print(f"[INFO] Starting video processing: {input_path}")
     try:
@@ -76,10 +88,9 @@ def process_video(input_path, output_path):
         fps = int(cap.get(cv2.CAP_PROP_FPS))
         width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
         height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-
         out = cv2.VideoWriter(output_path, fourcc, fps, (width, height))
 
-        frame_count = 0 
+        frame_count = 0
         while True:
             ret, frame = cap.read()
             if not ret:
@@ -88,31 +99,23 @@ def process_video(input_path, output_path):
             frame_count += 1
             print(f"[INFO] Processing frame {frame_count}")
 
-            # Convert to RGB for HybridNets
             image_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             pil_img = Image.fromarray(image_rgb)
-
             input_tensor = transform(pil_img).unsqueeze(0)
 
-            # HybridNets segmentation
             with torch.no_grad():
                 seg_output = hybrid_model(input_tensor)[1][0].sigmoid().cpu().numpy()
 
             seg_mask = (seg_output > 0.3).astype(np.uint8)[0] * 255
             seg_mask_color = cv2.cvtColor(seg_mask, cv2.COLOR_GRAY2BGR)
 
-            # YOLO detection
             results = yolo_model(frame)
             annotated_frame = results[0].plot()
 
-            # Resize both to match VideoWriter size (width, height)
             annotated_frame = cv2.resize(annotated_frame, (width, height))
             seg_mask_color = cv2.resize(seg_mask_color, (width, height))
 
-            # Blend
             final_frame = cv2.addWeighted(annotated_frame, 0.7, seg_mask_color, 0.3, 0)
-
-            # Write frame to output video
             out.write(final_frame)
 
         cap.release()
@@ -121,4 +124,3 @@ def process_video(input_path, output_path):
 
     except Exception as e:
         print(f"[ERROR] Exception during video processing: {str(e)}")
-       
